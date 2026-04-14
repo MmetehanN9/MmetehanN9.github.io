@@ -1,127 +1,92 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Metehan | ESK 26 Maçı</title>
+    <title>Metehan ESK 26</title>
     <style>
-        body { background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; }
-        canvas { background: #27ae60; border: 4px solid #fff; cursor: pointer; margin-top: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .stats { padding: 15px; background: #2c3e50; border-bottom: 3px solid #f1c40f; }
-        h1 { margin: 0; color: #f1c40f; letter-spacing: 2px; }
-        .score-board { font-size: 22px; margin-top: 5px; }
+        body { background: #111; color: white; text-align: center; font-family: sans-serif; }
+        canvas { background: #2ecc71; border: 5px solid white; display: block; margin: 20px auto; cursor: crosshair; }
+        .info { font-size: 24px; margin: 10px; color: #f1c40f; }
     </style>
 </head>
 <body>
-    <div class="stats">
-        <h1>METEHAN</h1>
-        <div class="score-board">
-            <span style="color: #3498db">ESK 26:</span> <span id="s1">0</span> | 
-            <span style="color: #e74c3c">Rakip:</span> <span id="s2">0</span>
-        </div>
-    </div>
+    <div class="info">METEHAN | ESK 26 Maçı</div>
+    <div id="scoreBoard">Skor: 0 | Kurtarılan: 0</div>
     
-    <canvas id="game" width="800" height="500"></canvas>
-    <p>Topu fareyle kaleye doğru fırlat! (Tıkla ve sürükle)</p>
+    <canvas id="game" width="600" height="400"></canvas>
+    
+    <p>Topu kaleye fırlatmak için ekrana TIKLA!</p>
 
     <script>
-        const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d');
-        
+        const cvs = document.getElementById("game");
+        const ctx = cvs.getContext("2d");
+
         let score = 0;
         let saves = 0;
-        
-        // Karakter ve Nesne Bilgileri
-        let ball = { x: 400, y: 450, r: 15, vx: 0, vy: 0, active: false };
-        let goal = { x: 250, y: 20, w: 300, h: 80 };
-        let goalie = { x: 375, y: 40, w: 50, h: 70, dir: 1 };
-        let player = { x: 320, y: 430, w: 50, h: 80 };
 
-        function drawBox(x, y, w, h, color) {
-            ctx.fillStyle = color;
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 2;
-            ctx.fillRect(x, y, w, h);
-            ctx.strokeRect(x, y, w, h);
-        }
+        let ball = { x: 300, y: 350, r: 15, vx: 0, vy: 0, active: false };
+        let goalie = { x: 275, y: 40, w: 50, h: 20, dir: 2 };
+        let goal = { x: 150, y: 10, w: 300, h: 50 };
 
-        function drawPlayer(x, y, color, label) {
-            // Kafa
-            ctx.fillStyle = "#ffdbac";
-            ctx.beginPath();
-            ctx.arc(x + 25, y, 20, 0, Math.PI*2);
-            ctx.fill();
-            ctx.stroke();
-            // Forma
-            drawBox(x, y + 20, 50, 60, color);
-            // İsim
-            ctx.fillStyle = "white";
-            ctx.font = "12px Arial";
-            ctx.fillText(label, x + 5, y + 50);
-        }
+        function draw() {
+            // Arka planı temizle
+            ctx.fillStyle = "#2ecc71";
+            ctx.fillRect(0, 0, cvs.width, cvs.height);
 
-        function update() {
-            // Kaleci hareketi
-            goalie.x += 4 * goalie.dir;
-            if(goalie.x < goal.x || goalie.x + goalie.w > goal.x + goal.w) goalie.dir *= -1;
-
-            if (ball.active) {
-                ball.x += ball.vx;
-                ball.y += ball.vy;
-                ball.vx *= 0.98;
-                ball.vy *= 0.98;
-
-                // Kaleci kurtarışı
-                if (ball.x > goalie.x && ball.x < goalie.x + goalie.w && ball.y > goalie.y && ball.y < goalie.y + goalie.h) {
-                    saves++;
-                    document.getElementById('s2').innerText = saves;
-                    reset();
-                }
-                // Gol
-                else if (ball.y < goal.y + goal.h && ball.x > goal.x && ball.x < goal.x + goal.w) {
-                    score++;
-                    document.getElementById('s1').innerText = score;
-                    reset();
-                }
-                // Dışarı çıkma
-                if (ball.y < 0 || ball.x < 0 || ball.x > 800) reset();
-            }
-        }
-
-        function reset() {
-            ball.x = 400; ball.y = 450; ball.vx = 0; ball.vy = 0; ball.active = false;
-        }
-
-        function render() {
-            ctx.clearRect(0, 0, 800, 500);
-            
-            // Saha Çizgileri
-            ctx.strokeStyle = "rgba(255,255,255,0.5)";
-            ctx.strokeRect(50, 50, 700, 400);
-            
-            // Kale
+            // Kale çizgisi
             ctx.strokeStyle = "white";
-            ctx.lineWidth = 5;
+            ctx.lineWidth = 4;
             ctx.strokeRect(goal.x, goal.y, goal.w, goal.h);
 
-            // Oyuncular
-            drawPlayer(goalie.x, goalie.y, "#e74c3c", "RAKİP");
-            drawPlayer(player.x, player.y, "#3498db", "METEHAN");
+            // Kaleci (Kırmızı)
+            ctx.fillStyle = "red";
+            ctx.fillRect(goalie.x, goalie.y, goalie.w, goalie.h);
+            goalie.x += goalie.dir;
+            if(goalie.x < goal.x || goalie.x + goalie.w > goal.x + goal.w) goalie.dir *= -1;
 
-            // Top
+            // Top (Beyaz)
             ctx.beginPath();
             ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
             ctx.fillStyle = "white";
             ctx.fill();
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 2;
             ctx.stroke();
 
-            update();
-            requestAnimationFrame(render);
+            if(ball.active) {
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                
+                // Kaleci kurtarışı
+                if(ball.y < goalie.y + goalie.h && ball.x > goalie.x && ball.x < goalie.x + goalie.w) {
+                    saves++;
+                    reset();
+                }
+                // Gol kontrolü
+                else if(ball.y < goal.y + goal.h && ball.x > goal.x && ball.x < goal.x + goal.w) {
+                    score++;
+                    reset();
+                }
+                // Dışarı çıkma
+                if(ball.y < 0 || ball.x < 0 || ball.x > 600) reset();
+            }
+
+            document.getElementById("scoreBoard").innerText = `Skor: ${score} | Kurtarılan: ${saves}`;
+            requestAnimationFrame(draw);
         }
 
-        canvas.addEventListener('mousedown', (e) => {
-            if (!ball.active) {
-                const r = canvas.getBoundingClientRect();
-                ball.vx = ((e.clientX - r.left) - ball.x) * 0.15;
-                ball.vy = ((e.clientY - r.top) - ball.
+        function reset() {
+            ball.x = 300; ball.y = 350; ball.vx = 0; ball.vy = 0; ball.active = false;
+        }
+
+        cvs.addEventListener("mousedown", (e) => {
+            if(!ball.active) {
+                const rect = cvs.getBoundingClientRect();
+                ball.vx = ((e.clientX - rect.left) - ball.x) * 0.1;
+                ball.vy = ((e.clientY - rect.top) - ball.y) * 0.1;
+                ball.active = true;
+            }
+        });
+
+        draw();
+    </script>
+</body>
+</html>
