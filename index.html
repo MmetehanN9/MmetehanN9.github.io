@@ -2,25 +2,88 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Metehan'ın Dünyası</title>
+    <title>Metehan | ESK 26 Futbol</title>
     <style>
-        body {
-            background-color: #1a1a1a; /* Koyu gri arka plan */
-            color: white;             /* Beyaz yazı rengi */
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-        h1 { font-size: 3rem; margin-bottom: 0.5rem; }
-        p { font-size: 1.5rem; color: #3498db; }
+        body { background: #1a1a1a; color: white; font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; }
+        canvas { background: #2ecc71; border: 5px solid #fff; cursor: crosshair; margin-top: 20px; border-radius: 10px; }
+        .ui { padding: 20px; }
+        h1 { margin: 0; color: #f1c40f; }
+        .score { font-size: 24px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>Metehan</h1>
-    <p>Web siteme hoş geldiniz!</p>
+    <div class="ui">
+        <h1>METEHAN</h1>
+        <p>ESK 26 Futbol Oyununa Hoş Geldiniz!</p>
+        <div class="score">Skor: <span id="scoreVal">0</span></div>
+    </div>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <p>Topa tıkla ve kaleye sürükleyip bırak!</p>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('scoreVal');
+
+        let score = 0;
+        let ball = { x: 300, y: 350, r: 15, vx: 0, vy: 0, kicking: false };
+        let goal = { x: 200, y: 20, w: 200, h: 60 };
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Kaleyi Çiz
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 5;
+            ctx.strokeRect(goal.x, goal.y, goal.w, goal.h);
+
+            // Topu Çiz
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+            ctx.fillStyle = "white";
+            ctx.fill();
+            ctx.strokeStyle = "black";
+            ctx.stroke();
+            ctx.closePath();
+
+            if (ball.kicking) {
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                ball.vx *= 0.98;
+                ball.vy *= 0.98;
+
+                // Gol Kontrolü
+                if (ball.x > goal.x && ball.x < goal.x + goal.w && ball.y < goal.y + goal.h) {
+                    score++;
+                    scoreEl.innerText = score;
+                    resetBall();
+                }
+
+                // Dışarı çıkarsa sıfırla
+                if (ball.y < 0 || ball.x < 0 || ball.x > 600) resetBall();
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        function resetBall() {
+            ball.x = 300; ball.y = 350; ball.vx = 0; ball.vy = 0; ball.kicking = false;
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (!ball.kicking) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                // Hız hesapla (topun ters yönüne çekme mantığı)
+                ball.vx = (mouseX - ball.x) * 0.1;
+                ball.vy = (mouseY - ball.y) * 0.1;
+                ball.kicking = true;
+            }
+        });
+
+        draw();
+    </script>
 </body>
 </html>
