@@ -2,155 +2,118 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Metehan | ESK 26 3D Real</title>
+    <title>Metehan | ESK 26 3D Fix</title>
     <style>
         body { background: #111; color: white; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; }
         .ui { padding: 10px; background: #1a1a1a; border-bottom: 2px solid #f1c40f; position: relative; z-index: 10; }
-        canvas { background: #27ae60; display: block; margin: 0 auto; cursor: crosshair; touch-action: none; }
+        canvas { background: #27ae60; display: block; margin: 0 auto; cursor: crosshair; }
     </style>
 </head>
 <body>
     <div class="ui">
-        <h2>METEHAN | 3D ESK 26</h2>
+        <h2>METEHAN | 3D ESK 26 (Hız Düzenlendi)</h2>
         <div>Skor: <span id="s1" style="color:#3498db">0</span> | Kurtarılan: <span id="s2" style="color:#e74c3c">0</span></div>
-        <p style="margin:5px 0; font-size:12px;">Topu geriye çek ve fırlat! (Fare dışarı çıksa da çalışır)</p>
     </div>
-    
     <canvas id="game"></canvas>
 
     <script>
         const cvs = document.getElementById("game");
         const ctx = cvs.getContext("2d");
-
-        // Ekran boyutuna göre ayarla
         cvs.width = window.innerWidth;
-        cvs.height = window.innerHeight - 100;
+        cvs.height = window.innerHeight - 80;
 
         let score = 0, saves = 0;
         let ball = { x: cvs.width/2, y: cvs.height - 100, z: 0, r: 20, vx: 0, vy: 0, vz: 0, active: false };
-        let goalie = { x: cvs.width/2, y: 150, z: 800, w: 60, h: 100, d: 40, dir: 1 };
-        let goal = { x: cvs.width/2 - 200, y: 100, w: 400, h: 150, d: 100 };
-        
+        let goalie = { x: cvs.width/2, y: 150, z: 800, w: 70, h: 110, dir: 1 };
+        let goal = { x: cvs.width/2 - 200, y: 100, w: 400, h: 160 };
         let isDragging = false, mouseX, mouseY;
 
-        // 3D Kutu Çizim Fonksiyonu
-        function draw3DBox(x, y, z, w, h, d, color) {
+        function draw3DBox(x, y, z, w, h, color) {
             let scale = 1000 / (1000 + z);
             let px = (x - cvs.width/2) * scale + cvs.width/2;
             let py = (y - cvs.height/2) * scale + cvs.height/2;
-            let pw = w * scale;
-            let ph = h * scale;
-
-            // Yan yüzey (Derinlik hissi için)
             ctx.fillStyle = color;
-            ctx.globalAlpha = 0.8;
-            ctx.fillRect(px - pw/2, py - ph, pw, ph);
-            
-            // Üst yüzey/Kenarlar (3D efekti)
+            ctx.fillRect(px - (w*scale)/2, py - (h*scale), w*scale, h*scale);
             ctx.strokeStyle = "white";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(px - pw/2, py - ph, pw, ph);
-            ctx.globalAlpha = 1.0;
+            ctx.strokeRect(px - (w*scale)/2, py - (h*scale), w*scale, h*scale);
         }
 
         function resetBall() {
             ball.x = cvs.width/2; ball.y = cvs.height - 100; ball.z = 0;
-            ball.vx = 0; ball.vy = 0; ball.vz = 0; ball.active = false;
+            ball.vx = 0; ball.vz = 0; ball.active = false;
         }
 
         function update() {
-            // Kaleci Botu
-            goalie.x += 7 * goalie.dir;
-            if(goalie.x < goal.x + 50 || goalie.x > goal.x + goal.w - 50) goalie.dir *= -1;
+            goalie.x += 5 * goalie.dir;
+            if(goalie.x < goal.x + 40 || goalie.x > goal.x + goal.w - 40) goalie.dir *= -1;
 
             if (ball.active) {
                 ball.x += ball.vx;
                 ball.z += ball.vz;
-                ball.y -= ball.vz * 0.1; // Hafif yükselme efekti
                 
-                ball.vx *= 0.99;
-                ball.vz *= 0.99;
+                // --- DÜZELTME: Sürtünme eklendi (Top yavaşlar) ---
+                ball.vx *= 0.97; 
+                ball.vz *= 0.97;
 
-                // 3D Çarpışma Kontrolü
-                if (ball.z > 750) {
+                // --- DÜZELTME: Çarpışma ve Yok Olma Sınırı ---
+                if (ball.z > 780 && ball.z < 850) { // Kaleye ulaşma anı
                     if (ball.x > goalie.x - goalie.w/2 && ball.x < goalie.x + goalie.w/2) {
                         saves++; resetBall();
                     } else if (ball.x > goal.x && ball.x < goal.x + goal.w) {
                         score++; resetBall();
-                    } else { resetBall(); }
+                    }
                 }
-                if (ball.z > 1000 || ball.x < 0 || ball.x > cvs.width) resetBall();
+
+                // Top sadece çok uzağa giderse (2000 birim) veya yanlardan çıkarsa silinir
+                if (ball.z > 2000 || ball.x < -500 || ball.x > cvs.width + 500) resetBall();
             }
         }
 
         function render() {
             ctx.clearRect(0, 0, cvs.width, cvs.height);
-
-            // 1. Sahayı Çiz (Perspektif)
+            // Saha
             ctx.fillStyle = "#2ecc71";
             ctx.beginPath();
-            ctx.moveTo(0, cvs.height);
-            ctx.lineTo(cvs.width, cvs.height);
-            ctx.lineTo(cvs.width/2 + 200, 100);
-            ctx.lineTo(cvs.width/2 - 200, 100);
+            ctx.moveTo(0, cvs.height); ctx.lineTo(cvs.width, cvs.height);
+            ctx.lineTo(cvs.width/2 + 300, 100); ctx.lineTo(cvs.width/2 - 300, 100);
             ctx.fill();
 
-            // 2. 3D Kale
-            draw3DBox(cvs.width/2, 250, 850, goal.w, goal.h, goal.d, "rgba(255,255,255,0.2)");
+            draw3DBox(cvs.width/2, 260, 850, goal.w, goal.h, "rgba(255,255,255,0.2)"); // Kale
+            draw3DBox(goalie.x, goalie.y + 110, goalie.z, goalie.w, goalie.h, "red"); // Kaleci
 
-            // 3. 3D Kaleci (Rakip Bot)
-            draw3DBox(goalie.x, goalie.y + 100, goalie.z, goalie.w, goalie.h, goalie.d, "red");
-
-            // 4. Nişan Çizgisi
             if (isDragging) {
                 ctx.beginPath();
                 ctx.moveTo(ball.x, ball.y);
                 ctx.lineTo(ball.x + (ball.x - mouseX), ball.y + (ball.y - mouseY));
-                ctx.strokeStyle = "yellow";
-                ctx.setLineDash([5, 5]);
-                ctx.stroke();
-                ctx.setLineDash([]);
+                ctx.strokeStyle = "yellow"; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
             }
 
-            // 5. 3D Top
             let bScale = 1000 / (1000 + ball.z);
             let bX = (ball.x - cvs.width/2) * bScale + cvs.width/2;
             let bY = (ball.y - cvs.height/2) * bScale + cvs.height/2;
             ctx.beginPath();
             ctx.arc(bX, bY, ball.r * bScale, 0, Math.PI*2);
-            ctx.fillStyle = "white";
-            ctx.fill();
-            ctx.stroke();
+            ctx.fillStyle = "white"; ctx.fill(); ctx.stroke();
 
             update();
+            document.getElementById("s1").innerText = score;
+            document.getElementById("s2").innerText = saves;
             requestAnimationFrame(render);
         }
 
-        // Fare pencereden çıksa bile çalışması için WINDOW dinleyicileri
-        window.addEventListener("mousedown", (e) => {
-            if (!ball.active) {
-                isDragging = true;
-                mouseX = e.clientX; mouseY = e.clientY;
-            }
-        });
-
-        window.addEventListener("mousemove", (e) => {
-            if (isDragging) {
-                mouseX = e.clientX; mouseY = e.clientY;
-            }
-        });
-
+        window.addEventListener("mousedown", (e) => { if(!ball.active){ isDragging = true; mouseX = e.clientX; mouseY = e.clientY; }});
+        window.addEventListener("mousemove", (e) => { if(isDragging){ mouseX = e.clientX; mouseY = e.clientY; }});
         window.addEventListener("mouseup", (e) => {
             if (isDragging) {
                 isDragging = false;
                 let dx = ball.x - mouseX;
                 let dy = ball.y - mouseY;
-                ball.vx = (dx + (cvs.width/2 - ball.x)) * 0.1; // Yön düzeltme
-                ball.vz = Math.sqrt(dx*dx + dy*dy) * 0.8;
+                // --- DÜZELTME: Güç çarpanı düşürüldü ---
+                ball.vx = dx * 0.08; 
+                ball.vz = Math.min(Math.sqrt(dx*dx + dy*dy) * 0.5, 25); // Maksimum hız sınırı
                 ball.active = true;
             }
         });
-
         render();
     </script>
 </body>
