@@ -2,192 +2,123 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Metehan ESK 26 3D Pro</title>
+    <title>Metehan | ESK 26 Pro v2</title>
     <style>
-        body { background: #111; color: white; text-align: center; font-family: 'Segoe UI', sans-serif; margin: 0; }
-        .info { font-size: 24px; padding: 20px; background: #1a1a1a; color: #f1c40f; border-bottom: 2px solid white; }
-        .teams { font-size: 18px; margin-top: 5px; color: white; }
-        canvas { background: #2ecc71; border: 10px solid #27ae60; box-shadow: 0 0 50px rgba(0,0,0,0.8); cursor: pointer; display: block; margin: 30px auto; border-radius: 10px; }
+        body { background: #111; color: white; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; }
+        .ui { padding: 15px; background: #1a1a1a; border-bottom: 2px solid #f1c40f; }
+        canvas { background: #2ecc71; border: 5px solid white; display: block; margin: 20px auto; cursor: crosshair; border-radius: 15px; }
+        .power-bar-container { width: 200px; height: 20px; background: #333; margin: 10px auto; border-radius: 10px; border: 2px solid white; overflow: hidden; }
+        #powerBar { width: 0%; height: 100%; background: linear-gradient(to right, #2ecc71, #f1c40f, #e74c3c); transition: width 0.1s; }
     </style>
 </head>
 <body>
-    <div class="info">
-        METEHAN | ESK 26
-        <div class="teams">Sen (Mavi) | <span style="color: #e74c3c">Rakip Bot</span> (Kırmızı)</div>
-        <div>Skor: <span id="s1" style="color: #3498db">0</span> | Kurtarılan: <span id="s2" style="color: #e74c3c">0</span></div>
+    <div class="ui">
+        <h2>METEHAN | ESK 26</h2>
+        <div>Skor: <span id="s1" style="color:#3498db">0</span> | Kurtarılan: <span id="s2" style="color:#e74c3c">0</span></div>
+        <div class="power-bar-container"><div id="powerBar"></div></div>
+        <small>Topu geriye doğru çek ve bırak! (Güç göstergesine dikkat et)</small>
     </div>
     
     <canvas id="game" width="800" height="500"></canvas>
-    
-    <p>3D Fırlatma: Fareyle TIKLA, sürükle ve fırlat! (Ne kadar uzağa çekersen o kadar hızlı gider)</p>
 
     <script>
         const cvs = document.getElementById("game");
         const ctx = cvs.getContext("2d");
+        const pBar = document.getElementById("powerBar");
 
-        let score = 0;
-        let saves = 0;
+        let score = 0, saves = 0;
+        let ball = { x: 400, y: 450, z: 0, r: 20, vx: 0, vy: 0, vz: 0, active: false };
+        let goalie = { x: 400, y: 70, w: 60, h: 90, dir: 1 };
+        let goal = { x: 200, y: 40, w: 400, h: 100 };
+        
+        let isAiming = false, dragX, dragY;
 
-        // 3D Perspektif için sabitler
-        const Y_PERSPECTIVE = 0.5; // Y eksenindeki sıkışma (3D hissi)
-
-        // Nesneler ve Özellikleri
-        let goal = { x: 100, y: 50, w: 600, h: 100, depth: 30 }; // Kale
-        let ball = { x: 400, y: 450, z: 0, r: 25, vx: 0, vy: 0, vz: 0, active: false }; // Top
-        let goalie = { x: 400, y: 60, z: 0, w: 80, h: 120, dir: 1 }; // Kaleci Bot
-        let player = { x: 100, y: 420, z: 0, w: 80, h: 140 }; // Sensin (Görsel)
-
-        // Fare etkileşimi için değişkenler
-        let dragStartX, dragStartY;
-        let isDragging = false;
-
-        function drawCharacter(char, color, label) {
-            // Basit Perspektif Hesaplama (Z-eksenine göre küçülme)
-            let zScale = 1 - (char.z / 1000); // 0 ile 1 arası
-            let pX = char.x * zScale + (cvs.width/2 * (1 - zScale));
-            let pY = char.y * zScale * Y_PERSPECTIVE;
-            let pW = char.w * zScale;
-            let pH = char.h * zScale;
-
-            // Kafa
-            ctx.fillStyle = "#ffdbac";
-            ctx.beginPath();
-            ctx.arc(pX, pY - pH/1.5, pW/2.5, 0, Math.PI*2);
-            ctx.fill();
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Forma
-            ctx.fillStyle = color;
-            ctx.fillRect(pX - pW/2, pY - pH/2, pW, pH);
-            ctx.strokeRect(pX - pW/2, pY - pH/2, pW, pH);
-
-            // İsim
-            ctx.fillStyle = "white";
-            ctx.font = "bold 14px Segoe UI";
-            ctx.fillText(label, pX - pW/2.5, pY - pH/2.5);
-        }
-
-        function drawBall() {
-            // Perspektif ve Z-eksenine göre Topun boyutu/konumu
-            let zScale = 1 - (ball.z / 1000); 
-            let pX = ball.x * zScale + (cvs.width/2 * (1 - zScale));
-            let pY = (ball.y * zScale) * Y_PERSPECTIVE + (cvs.height * (1 - Y_PERSPECTIVE) * (1-zScale)); // Yükseklik ve perspektif ayarı
-            let pR = ball.r * zScale;
-
-            if (pR < 5) pR = 5; // Minimum top boyutu
-
-            // Top (3D Gölge Efekti ile)
-            ctx.beginPath();
-            ctx.arc(pX, pY, pR, 0, Math.PI*2);
-            ctx.fillStyle = "white";
-            ctx.fill();
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // Perspektif gölgesi (topun altında)
-            ctx.beginPath();
-            ctx.ellipse(pX, pY + pR/2, pR*1.5, pR/3, 0, 0, Math.PI*2);
-            ctx.fillStyle = "rgba(0,0,0,0.3)";
-            ctx.fill();
-        }
-
-        function update() {
-            // Kaleci Bot Hareketi (Zeki değil ama sağa sola gider)
-            goalie.x += 6 * goalie.dir;
-            if(goalie.x < goal.x + goalie.w/2 || goalie.x > goal.x + goal.w - goalie.w/2) goalie.dir *= -1;
-
-            if (ball.active) {
-                // Top Hareketi (Sanal Z-ekseni)
-                ball.x += ball.vx;
-                ball.y += ball.vy;
-                ball.z += ball.vz; // Z-ekseninde ilerleme
-
-                // "Hava sürtünmesi"
-                ball.vx *= 0.99;
-                ball.vy *= 0.99;
-                ball.vz *= 0.99;
-
-                // Kaleci kurtarışı ve Gol Kontrolü (Daha basit Z-ekseni çakışması)
-                if (ball.z > 900) { // Top kaleye yaklaştıysa
-                    // Kaleci Kurtarışı (Top kaleciyle aynı X-koordinatında mı?)
-                    if (ball.x > goalie.x - goalie.w/2 && ball.x < goalie.x + goalie.w/2) {
-                        saves++;
-                        reset();
-                    }
-                    // Gol Kontrolü (Top kale sınırları içinde mi?)
-                    else if (ball.x > goal.x && ball.x < goal.x + goal.w && ball.y > goal.y && ball.y < goal.y + goal.h) {
-                        score++;
-                        reset();
-                    } else { // Direğin yanından dışarı
-                        reset();
-                    }
-                }
-
-                // Saha dışı kontrolü
-                if (ball.y < 0 || ball.z < 0 || ball.z > 1200) reset();
-            }
-
-            // Skorları Güncelle
-            document.getElementById('s1').innerText = score;
-            document.getElementById('s2').innerText = saves;
-        }
-
-        function reset() {
+        function resetBall() {
             ball.x = 400; ball.y = 450; ball.z = 0; ball.vx = 0; ball.vy = 0; ball.vz = 0; ball.active = false;
+            pBar.style.width = "0%";
         }
 
         function draw() {
-            // Arka planı temizle
-            ctx.fillStyle = "#2ecc71";
-            ctx.fillRect(0, 0, cvs.width, cvs.height);
+            ctx.clearRect(0, 0, cvs.width, cvs.height);
 
-            // Perspektif Saha Çizgileri
-            ctx.strokeStyle = "rgba(255,255,255,0.3)";
-            ctx.lineWidth = 2;
+            // 1. Sahayı ve Kaleyi Çiz
+            ctx.strokeStyle = "white"; ctx.lineWidth = 4;
+            ctx.strokeRect(goal.x, goal.y, goal.w, goal.h);
+
+            // 2. Kaleci Botu (Hareketi sınırlı ve daha gerçekçi)
+            goalie.x += 5 * goalie.dir;
+            if(goalie.x < goal.x + 30 || goalie.x > goal.x + goal.w - 30) goalie.dir *= -1;
+            ctx.fillStyle = "red";
+            ctx.fillRect(goalie.x - goalie.w/2, goalie.y, goalie.w, goalie.h);
+
+            // 3. Nişan Alma Çizgisi
+            if (isAiming) {
+                ctx.beginPath();
+                ctx.moveTo(ball.x, ball.y);
+                ctx.lineTo(ball.x + (ball.x - dragX), ball.y + (ball.y - dragY));
+                ctx.setLineDash([5, 5]);
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 4. Top ve 3D Efekti
+            let scale = 1 - (ball.z / 1000);
+            let px = ball.x; 
+            let py = ball.y - (ball.z * 0.3); // Yükseklik hissi
+            let pr = ball.r * scale;
+
             ctx.beginPath();
-            ctx.moveTo(goal.x, goal.y * Y_PERSPECTIVE);
-            ctx.lineTo(goal.x + goal.w, goal.y * Y_PERSPECTIVE);
-            ctx.stroke();
-            
-            // Kale (Perspektif)
-            ctx.strokeStyle = "white";
-            ctx.lineWidth = 5;
-            ctx.strokeRect(goal.x, goal.y * Y_PERSPECTIVE, goal.w, goal.h * Y_PERSPECTIVE);
+            ctx.arc(px, py, pr, 0, Math.PI*2);
+            ctx.fillStyle = "white"; ctx.fill();
+            ctx.strokeStyle = "black"; ctx.stroke();
 
-            // Karakterler ve Top (Perspektif çizimi)
-            drawCharacter(goalie, "#e74c3c", "RAKİP");
-            drawBall(); // Topu çiz (karakterlerin önünde/arkasında olması için)
-            drawCharacter(player, "#3498db", "ESK 26");
+            // 5. Fizik ve Çarpışma
+            if (ball.active) {
+                ball.x += ball.vx; ball.z += ball.vz;
+                ball.vx *= 0.98; ball.vz *= 0.98;
 
-            update();
+                if (ball.z > 800) {
+                    if (ball.x > goalie.x - goalie.w/2 && ball.x < goalie.x + goalie.w/2) {
+                        saves++; resetBall();
+                    } else if (ball.x > goal.x && ball.x < goal.x + goal.w) {
+                        score++; resetBall();
+                    } else { resetBall(); }
+                }
+                if (ball.x < 0 || ball.x > 800) resetBall();
+            }
+
+            document.getElementById("s1").innerText = score;
+            document.getElementById("s2").innerText = saves;
             requestAnimationFrame(draw);
         }
 
-        // Fare Etkileşimi (3D fırlatma hissi için Z-ekseni hızı ekledik)
         cvs.addEventListener("mousedown", (e) => {
             if (!ball.active) {
-                isDragging = true;
-                const rect = cvs.getBoundingClientRect();
-                dragStartX = e.clientX - rect.left;
-                dragStartY = e.clientY - rect.top;
+                isAiming = true;
+                const r = cvs.getBoundingClientRect();
+                dragX = e.clientX - r.left; dragY = e.clientY - r.top;
+            }
+        });
+
+        cvs.addEventListener("mousemove", (e) => {
+            if (isAiming) {
+                const r = cvs.getBoundingClientRect();
+                dragX = e.clientX - r.left; dragY = e.clientY - r.top;
+                let dist = Math.sqrt(Math.pow(ball.x - dragX, 2) + Math.pow(ball.y - dragY, 2));
+                pBar.style.width = Math.min(dist, 200) / 2 + "%";
             }
         });
 
         cvs.addEventListener("mouseup", (e) => {
-            if (isDragging && !ball.active) {
-                isDragging = false;
-                const rect = cvs.getBoundingClientRect();
-                const dragEndX = e.clientX - rect.left;
-                const dragEndY = e.clientY - rect.top;
-
-                // Çekme mesafesine göre hız (ne kadar uzağa çekersen o kadar hızlı gider)
-                // Bu kodda fırlatma yönünü "topun tersine çekme" olarak değiştirdim, daha gerçekçi.
-                ball.vx = (ball.x - dragEndX) * 0.1;
-                ball.vy = (ball.y - dragEndY) * 0.1;
-                ball.vz = Math.sqrt(Math.pow(ball.vx, 2) + Math.pow(ball.vy, 2)) * 1.5; // Z-ekseni hızı (ileri fırlama)
+            if (isAiming) {
+                isAiming = false;
+                const r = cvs.getBoundingClientRect();
+                let dx = ball.x - (e.clientX - r.left);
+                let dy = ball.y - (e.clientY - r.top);
+                
+                ball.vx = dx * 0.15;
+                ball.vz = Math.sqrt(dx*dx + dy*dy) * 1.2; // Güç mekaniği
                 ball.active = true;
             }
         });
