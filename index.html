@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Metehan | ESK 26 3D Fix</title>
+    <title>Metehan | ESK 26 3D Pro Max</title>
     <style>
         body { background: #111; color: white; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; }
         .ui { padding: 10px; background: #1a1a1a; border-bottom: 2px solid #f1c40f; position: relative; z-index: 10; }
@@ -11,8 +11,9 @@
 </head>
 <body>
     <div class="ui">
-        <h2>METEHAN | 3D ESK 26 (Hız Düzenlendi)</h2>
+        <h2>METEHAN | 3D ESK 26 (Hassas Kontrol)</h2>
         <div>Skor: <span id="s1" style="color:#3498db">0</span> | Kurtarılan: <span id="s2" style="color:#e74c3c">0</span></div>
+        <small>Çok az çekmen yeterli, hassasiyet artırıldı!</small>
     </div>
     <canvas id="game"></canvas>
 
@@ -26,7 +27,7 @@
         let ball = { x: cvs.width/2, y: cvs.height - 100, z: 0, r: 20, vx: 0, vy: 0, vz: 0, active: false };
         let goalie = { x: cvs.width/2, y: 150, z: 800, w: 70, h: 110, dir: 1 };
         let goal = { x: cvs.width/2 - 200, y: 100, w: 400, h: 160 };
-        let isDragging = false, mouseX, mouseY;
+        let isDragging = false, startX, startY, currentX, currentY;
 
         function draw3DBox(x, y, z, w, h, color) {
             let scale = 1000 / (1000 + z);
@@ -50,42 +51,37 @@
             if (ball.active) {
                 ball.x += ball.vx;
                 ball.z += ball.vz;
-                
-                // --- DÜZELTME: Sürtünme eklendi (Top yavaşlar) ---
-                ball.vx *= 0.97; 
-                ball.vz *= 0.97;
+                ball.vx *= 0.98; 
+                ball.vz *= 0.98;
 
-                // --- DÜZELTME: Çarpışma ve Yok Olma Sınırı ---
-                if (ball.z > 780 && ball.z < 850) { // Kaleye ulaşma anı
+                if (ball.z > 780 && ball.z < 850) {
                     if (ball.x > goalie.x - goalie.w/2 && ball.x < goalie.x + goalie.w/2) {
                         saves++; resetBall();
                     } else if (ball.x > goal.x && ball.x < goal.x + goal.w) {
                         score++; resetBall();
                     }
                 }
-
-                // Top sadece çok uzağa giderse (2000 birim) veya yanlardan çıkarsa silinir
                 if (ball.z > 2000 || ball.x < -500 || ball.x > cvs.width + 500) resetBall();
             }
         }
 
         function render() {
             ctx.clearRect(0, 0, cvs.width, cvs.height);
-            // Saha
             ctx.fillStyle = "#2ecc71";
             ctx.beginPath();
             ctx.moveTo(0, cvs.height); ctx.lineTo(cvs.width, cvs.height);
             ctx.lineTo(cvs.width/2 + 300, 100); ctx.lineTo(cvs.width/2 - 300, 100);
             ctx.fill();
 
-            draw3DBox(cvs.width/2, 260, 850, goal.w, goal.h, "rgba(255,255,255,0.2)"); // Kale
-            draw3DBox(goalie.x, goalie.y + 110, goalie.z, goalie.w, goalie.h, "red"); // Kaleci
+            draw3DBox(cvs.width/2, 260, 850, goal.w, goal.h, "rgba(255,255,255,0.2)");
+            draw3DBox(goalie.x, goalie.y + 110, goalie.z, goalie.w, goalie.h, "red");
 
             if (isDragging) {
                 ctx.beginPath();
                 ctx.moveTo(ball.x, ball.y);
-                ctx.lineTo(ball.x + (ball.x - mouseX), ball.y + (ball.y - mouseY));
-                ctx.strokeStyle = "yellow"; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+                // Çekme yönünü göster (Daha belirgin)
+                ctx.lineTo(ball.x + (startX - currentX) * 2, ball.y + (startY - currentY) * 2);
+                ctx.strokeStyle = "yellow"; ctx.lineWidth = 3; ctx.stroke();
             }
 
             let bScale = 1000 / (1000 + ball.z);
@@ -101,16 +97,24 @@
             requestAnimationFrame(render);
         }
 
-        window.addEventListener("mousedown", (e) => { if(!ball.active){ isDragging = true; mouseX = e.clientX; mouseY = e.clientY; }});
-        window.addEventListener("mousemove", (e) => { if(isDragging){ mouseX = e.clientX; mouseY = e.clientY; }});
+        window.addEventListener("mousedown", (e) => { 
+            if(!ball.active){ 
+                isDragging = true; 
+                startX = e.clientX; startY = e.clientY; 
+                currentX = e.clientX; currentY = e.clientY;
+            }
+        });
+        window.addEventListener("mousemove", (e) => { 
+            if(isDragging){ currentX = e.clientX; currentY = e.clientY; }
+        });
         window.addEventListener("mouseup", (e) => {
             if (isDragging) {
                 isDragging = false;
-                let dx = ball.x - mouseX;
-                let dy = ball.y - mouseY;
-                // --- DÜZELTME: Güç çarpanı düşürüldü ---
-                ball.vx = dx * 0.08; 
-                ball.vz = Math.min(Math.sqrt(dx*dx + dy*dy) * 0.5, 25); // Maksimum hız sınırı
+                let dx = startX - e.clientX;
+                let dy = startY - e.clientY;
+                // --- ÇÖZÜM: Hassasiyet katsayısı artırıldı (0.2 ve 1.5) ---
+                ball.vx = dx * 0.2; 
+                ball.vz = Math.min(dy * 1.5, 45); // Yukarı çekme mesafesine göre hız
                 ball.active = true;
             }
         });
