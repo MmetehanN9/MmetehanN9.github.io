@@ -260,11 +260,11 @@
     let currentTab = 'trending';
 
     const tabQueries = {
-        trending:   { q: 'trending music 2025 official',         label: '🔥 Şu an Trend' },
-        turkish:    { q: 'türkçe pop müzik 2025 klip',           label: '🇹🇷 Türkçe Pop' },
-        hiphop:     { q: 'hip hop rap music 2025 official',      label: '🎤 Hip-Hop' },
-        electronic: { q: 'electronic dance music EDM 2025',      label: '⚡ Electronic' },
-        rock:       { q: 'rock music 2025 official video',       label: '🎸 Rock' },
+        trending:   { q: 'official music video 2025 new song',               label: '🔥 Şu an Trend' },
+        turkish:    { q: 'türkçe pop 2025 resmi klip official video',        label: '🇹🇷 Türkçe Pop' },
+        hiphop:     { q: 'hip hop 2025 official music video audio',          label: '🎤 Hip-Hop' },
+        electronic: { q: 'electronic music 2025 official audio video',       label: '⚡ Electronic' },
+        rock:       { q: 'rock 2025 official music video audio',             label: '🎸 Rock' },
     };
 
     // GREETING
@@ -289,21 +289,34 @@
         fetchYT(tabQueries[key]?.q || 'music 2025');
     }
 
+    // Müzik olmayan kanal/başlık filtresi
+    const BLOCKED_KEYWORDS = ['compilation', 'podcast', 'interview', 'live stream', 'reaction', 'commentary', 'tutorial', 'review', 'vlog', 'gameplay', 'trailer', 'news', 'politics', 'haber'];
+    function isMusicVideo(item) {
+        const title = item.snippet.title.toLowerCase();
+        const channel = item.snippet.channelTitle.toLowerCase();
+        const blocked = BLOCKED_KEYWORDS.some(kw => title.includes(kw) || channel.includes(kw));
+        return !blocked;
+    }
+
     // FETCH YOUTUBE
     async function fetchYT(query) {
         const grid = document.getElementById('music-grid');
         grid.innerHTML = Array(8).fill('<div class="skeleton skeleton-card"></div>').join('');
         try {
-            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=20&q=${encodeURIComponent(query)}&key=${YT_KEY}`;
+            // videoCategoryId=10 = Music, topicId=/m/04rlf = Music topic
+            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&topicId=%2Fm%2F04rlf&maxResults=30&q=${encodeURIComponent(query)}&key=${YT_KEY}`;
             const res = await fetch(url);
             const data = await res.json();
             if (data.error) throw new Error(data.error.message);
-            tracks = (data.items || []).filter(i => i.id?.videoId).map(i => ({
-                id: i.id.videoId,
-                title: i.snippet.title,
-                channel: i.snippet.channelTitle,
-                thumb: i.snippet.thumbnails?.medium?.url || i.snippet.thumbnails?.default?.url || '',
-            }));
+            tracks = (data.items || [])
+                .filter(i => i.id?.videoId && isMusicVideo(i))
+                .slice(0, 20)
+                .map(i => ({
+                    id: i.id.videoId,
+                    title: i.snippet.title,
+                    channel: i.snippet.channelTitle,
+                    thumb: i.snippet.thumbnails?.medium?.url || i.snippet.thumbnails?.default?.url || '',
+                }));
             renderGrid();
         } catch(e) {
             grid.innerHTML = `<div class="error-box">
@@ -322,7 +335,7 @@
         if (!q) return;
         document.getElementById('section-label').textContent = `🔍 "${q}"`;
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        fetchYT(q + ' official music video');
+        fetchYT(q + ' official audio OR official music video');
     }
 
     // RENDER
