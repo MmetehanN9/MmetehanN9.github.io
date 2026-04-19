@@ -2,123 +2,62 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Metehan | ESK 26 3D Pro Max</title>
-    <style>
-        body { background: #111; color: white; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; }
-        .ui { padding: 10px; background: #1a1a1a; border-bottom: 2px solid #f1c40f; position: relative; z-index: 10; }
-        canvas { background: #27ae60; display: block; margin: 0 auto; cursor: crosshair; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kendi Spotify'ım</title>
 </head>
 <body>
-    <div class="ui">
-        <h2>METEHAN | 3D ESK 26 (Hassas Kontrol)</h2>
-        <div>Skor: <span id="s1" style="color:#3498db">0</span> | Kurtarılan: <span id="s2" style="color:#e74c3c">0</span></div>
-        <small>Çok az çekmen yeterli, hassasiyet artırıldı!</small>
-    </div>
-    <canvas id="game"></canvas>
 
-    <script>
-        const cvs = document.getElementById("game");
-        const ctx = cvs.getContext("2d");
-        cvs.width = window.innerWidth;
-        cvs.height = window.innerHeight - 80;
+    <nav>
+        <h2>Menü</h2>
+        <ul>
+            <li><a href="#">Ana Sayfa</a></li>
+            <li><a href="#">Ara</a></li>
+            <li><a href="#">Kitaplığın</a></li>
+        </ul>
+        <br>
+        <h3>Çalma Listeleri</h3>
+        <ul>
+            <li><a href="#">Kodlama Yaparken</a></li>
+            <li><a href="#">Spor Şarkıları</a></li>
+            <li><a href="#">Favoriler</a></li>
+        </ul>
+    </nav>
 
-        let score = 0, saves = 0;
-        let ball = { x: cvs.width/2, y: cvs.height - 100, z: 0, r: 20, vx: 0, vy: 0, vz: 0, active: false };
-        let goalie = { x: cvs.width/2, y: 150, z: 800, w: 70, h: 110, dir: 1 };
-        let goal = { x: cvs.width/2 - 200, y: 100, w: 400, h: 160 };
-        let isDragging = false, startX, startY, currentX, currentY;
+    <main>
+        <header>
+            <h1>Hoş Geldin</h1>
+        </header>
 
-        function draw3DBox(x, y, z, w, h, color) {
-            let scale = 1000 / (1000 + z);
-            let px = (x - cvs.width/2) * scale + cvs.width/2;
-            let py = (y - cvs.height/2) * scale + cvs.height/2;
-            ctx.fillStyle = color;
-            ctx.fillRect(px - (w*scale)/2, py - (h*scale), w*scale, h*scale);
-            ctx.strokeStyle = "white";
-            ctx.strokeRect(px - (w*scale)/2, py - (h*scale), w*scale, h*scale);
-        }
+        <section>
+            <h2>Önerilen Çalma Listeleri</h2>
+            
+            <div>
+                <img src="https://via.placeholder.com/150" alt="Albüm Kapağı">
+                <h3>Günün Karışımı</h3>
+                <p>Senin için seçilen harika şarkılar.</p>
+            </div>
 
-        function resetBall() {
-            ball.x = cvs.width/2; ball.y = cvs.height - 100; ball.z = 0;
-            ball.vx = 0; ball.vz = 0; ball.active = false;
-        }
+            <div>
+                <img src="https://via.placeholder.com/150" alt="Albüm Kapağı">
+                <h3>Yeni Çıkanlar</h3>
+                <p>En yeni hit parçalar.</p>
+            </div>
+        </section>
+    </main>
 
-        function update() {
-            goalie.x += 5 * goalie.dir;
-            if(goalie.x < goal.x + 40 || goalie.x > goal.x + goal.w - 40) goalie.dir *= -1;
+    <footer>
+        <div>
+            <h4>Şu an çalan: Örnek Şarkı</h4>
+            <p>Sanatçı Adı</p>
+        </div>
+        
+        <div>
+            <audio controls>
+                <source src="sarki-dosyasi.mp3" type="audio/mpeg">
+                Tarayıcınız ses elementini desteklemiyor.
+            </audio>
+        </div>
+    </footer>
 
-            if (ball.active) {
-                ball.x += ball.vx;
-                ball.z += ball.vz;
-                ball.vx *= 0.98; 
-                ball.vz *= 0.98;
-
-                if (ball.z > 780 && ball.z < 850) {
-                    if (ball.x > goalie.x - goalie.w/2 && ball.x < goalie.x + goalie.w/2) {
-                        saves++; resetBall();
-                    } else if (ball.x > goal.x && ball.x < goal.x + goal.w) {
-                        score++; resetBall();
-                    }
-                }
-                if (ball.z > 2000 || ball.x < -500 || ball.x > cvs.width + 500) resetBall();
-            }
-        }
-
-        function render() {
-            ctx.clearRect(0, 0, cvs.width, cvs.height);
-            ctx.fillStyle = "#2ecc71";
-            ctx.beginPath();
-            ctx.moveTo(0, cvs.height); ctx.lineTo(cvs.width, cvs.height);
-            ctx.lineTo(cvs.width/2 + 300, 100); ctx.lineTo(cvs.width/2 - 300, 100);
-            ctx.fill();
-
-            draw3DBox(cvs.width/2, 260, 850, goal.w, goal.h, "rgba(255,255,255,0.2)");
-            draw3DBox(goalie.x, goalie.y + 110, goalie.z, goalie.w, goalie.h, "red");
-
-            if (isDragging) {
-                ctx.beginPath();
-                ctx.moveTo(ball.x, ball.y);
-                // Çekme yönünü göster (Daha belirgin)
-                ctx.lineTo(ball.x + (startX - currentX) * 2, ball.y + (startY - currentY) * 2);
-                ctx.strokeStyle = "yellow"; ctx.lineWidth = 3; ctx.stroke();
-            }
-
-            let bScale = 1000 / (1000 + ball.z);
-            let bX = (ball.x - cvs.width/2) * bScale + cvs.width/2;
-            let bY = (ball.y - cvs.height/2) * bScale + cvs.height/2;
-            ctx.beginPath();
-            ctx.arc(bX, bY, ball.r * bScale, 0, Math.PI*2);
-            ctx.fillStyle = "white"; ctx.fill(); ctx.stroke();
-
-            update();
-            document.getElementById("s1").innerText = score;
-            document.getElementById("s2").innerText = saves;
-            requestAnimationFrame(render);
-        }
-
-        window.addEventListener("mousedown", (e) => { 
-            if(!ball.active){ 
-                isDragging = true; 
-                startX = e.clientX; startY = e.clientY; 
-                currentX = e.clientX; currentY = e.clientY;
-            }
-        });
-        window.addEventListener("mousemove", (e) => { 
-            if(isDragging){ currentX = e.clientX; currentY = e.clientY; }
-        });
-        window.addEventListener("mouseup", (e) => {
-            if (isDragging) {
-                isDragging = false;
-                let dx = startX - e.clientX;
-                let dy = startY - e.clientY;
-                // --- ÇÖZÜM: Hassasiyet katsayısı artırıldı (0.2 ve 1.5) ---
-                ball.vx = dx * 0.2; 
-                ball.vz = Math.min(dy * 1.5, 45); // Yukarı çekme mesafesine göre hız
-                ball.active = true;
-            }
-        });
-        render();
-    </script>
 </body>
 </html>
