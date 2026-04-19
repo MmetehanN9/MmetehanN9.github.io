@@ -3,61 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kendi Spotify'ım</title>
+    <title>Benim Müzik Dünyam</title>
+    <style>
+        /* Genel Ayarlar */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #000; color: #fff; display: flex; height: 100vh; overflow: hidden; }
+
+        /* 1. SOL MENÜ (Sidebar) */
+        .sidebar { width: 240px; background-color: #000; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .sidebar a { color: #b3b3b3; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.3s; }
+        .sidebar a:hover { color: #fff; }
+        .playlist-list { list-style: none; margin-top: 10px; border-top: 1px solid #282828; pt: 10px; }
+        .playlist-list li { margin: 12px 0; color: #b3b3b3; cursor: pointer; font-size: 13px; }
+        .playlist-list li:hover { color: #fff; }
+
+        /* 2. ANA İÇERİK ALANI */
+        .main-content { flex: 1; background: linear-gradient(to bottom, #1e1e1e, #121212); overflow-y: auto; padding: 20px; }
+        .header { height: 60px; margin-bottom: 20px; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+        
+        /* Albüm Kartları */
+        .card { background-color: #181818; padding: 15px; border-radius: 8px; transition: 0.3s; cursor: pointer; }
+        .card:hover { background-color: #282828; }
+        .card img { width: 100%; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 8px 16px rgba(0,0,0,0.5); }
+        .card h3 { font-size: 16px; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card p { font-size: 12px; color: #b3b3b3; line-height: 1.4; }
+
+        /* 3. ALT OYNATICI (Player) */
+        .player-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background-color: #181818; border-top: 1px solid #282828; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .now-playing { display: flex; align-items: center; gap: 15px; width: 30%; }
+        .now-playing img { width: 56px; height: 56px; border-radius: 4px; }
+        .controls { width: 40%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        audio { filter: invert(100%) hue-rotate(180deg) brightness(1.5); height: 30px; width: 100%; max-width: 400px; }
+    </style>
 </head>
 <body>
 
-    <nav>
-        <h2>Menü</h2>
-        <ul>
-            <li><a href="#">Ana Sayfa</a></li>
-            <li><a href="#">Ara</a></li>
-            <li><a href="#">Kitaplığın</a></li>
+    <div class="sidebar">
+        <nav>
+            <div style="margin-bottom: 25px;"><a href="#" style="font-size: 24px; color: #1DB954;">Spotify-Clone</a></div>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <a href="#">🏠 Ana Sayfa</a>
+                <a href="#">🔍 Ara</a>
+                <a href="#">📚 Kitaplığın</a>
+            </div>
+        </nav>
+        <ul class="playlist-list">
+            <li style="font-weight: bold; color: white;">ÇALMA LİSTELERİN</li>
+            <li>Sınav Haftası Odak</li>
+            <li>Maç Günü Enerjisi</li>
+            <li>Gaming Lo-Fi</li>
+            <li>Leg Day Mix</li>
+            <li>İspanyolca Pratik</li>
         </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header"></div>
+        <h1>Öne Çıkanlar</h1>
         <br>
-        <h3>Çalma Listeleri</h3>
-        <ul>
-            <li><a href="#">Kodlama Yaparken</a></li>
-            <li><a href="#">Spor Şarkıları</a></li>
-            <li><a href="#">Favoriler</a></li>
-        </ul>
-    </nav>
-
-    <main>
-        <header>
-            <h1>Hoş Geldin</h1>
-        </header>
-
-        <section>
-            <h2>Önerilen Çalma Listeleri</h2>
-            
-            <div>
-                <img src="https://via.placeholder.com/150" alt="Albüm Kapağı">
-                <h3>Günün Karışımı</h3>
-                <p>Senin için seçilen harika şarkılar.</p>
+        <div class="grid-container">
+            <div class="card">
+                <img src="https://picsum.photos/200/200?random=1" alt="Kapak">
+                <h3>Günlük Mix 1</h3>
+                <p>Edis, Ezhel ve daha fazlası...</p>
             </div>
-
-            <div>
-                <img src="https://via.placeholder.com/150" alt="Albüm Kapağı">
-                <h3>Yeni Çıkanlar</h3>
-                <p>En yeni hit parçalar.</p>
+            <div class="card">
+                <img src="https://picsum.photos/200/200?random=2" alt="Kapak">
+                <h3>Video Editleme</h3>
+                <p>Odaklanmanı sağlayacak ritimler.</p>
             </div>
-        </section>
-    </main>
+            <div class="card">
+                <img src="https://picsum.photos/200/200?random=3" alt="Kapak">
+                <h3>Fenerbahçe Marşları</h3>
+                <p>Şampiyonluk yolunda...</p>
+            </div>
+            <div class="card">
+                <img src="https://picsum.photos/200/200?random=4" alt="Kapak">
+                <h3>Global Top 50</h3>
+                <p>Dünya ne dinliyor?</p>
+            </div>
+        </div>
+    </div>
 
-    <footer>
-        <div>
-            <h4>Şu an çalan: Örnek Şarkı</h4>
-            <p>Sanatçı Adı</p>
+    <div class="player-bar">
+        <div class="now-playing">
+            <img src="https://picsum.photos/56/56" alt="Küçük Kapak">
+            <div>
+                <h4 style="font-size: 14px;">Örnek Şarkı</h4>
+                <p style="font-size: 11px; color: #b3b3b3;">Sanatçı İsmi</p>
+            </div>
         </div>
         
-        <div>
+        <div class="controls">
             <audio controls>
-                <source src="sarki-dosyasi.mp3" type="audio/mpeg">
-                Tarayıcınız ses elementini desteklemiyor.
+                <source src="senin-sarkin.mp3" type="audio/mpeg">
             </audio>
         </div>
-    </footer>
+
+        <div style="width: 30%; text-align: right; color: #b3b3b3; font-size: 12px;">
+            Ses Ayarları
+        </div>
+    </div>
 
 </body>
 </html>
